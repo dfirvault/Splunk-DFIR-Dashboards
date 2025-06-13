@@ -91,8 +91,6 @@ This project is continuously improved. If you have:
 - Found a bug or false-positive,
 - Or want to contribute your own dashboard,
 
-Please open an [Issue](https://github.com/your-repo/issues) or submit a [Pull Request](https://github.com/your-repo/pulls).
-
 ---
 
 ## 👤 Author
