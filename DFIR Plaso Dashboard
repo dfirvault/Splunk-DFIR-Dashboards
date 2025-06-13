@@ -1,0 +1,199 @@
+<form theme="dark">
+  <label>DFIR Plaso Dashboard</label>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="field1" searchWhenChanged="false">
+      <label>Time</label>
+      <default>
+        <earliest>0</earliest>
+        <latest></latest>
+      </default>
+    </input>
+    <input type="dropdown" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <search>
+        <query>index=* | stats count by index</query>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
+      <choice value="">None</choice>
+      <prefix>index="</prefix>
+      <fieldForLabel>index</fieldForLabel>
+      <fieldForValue>index</fieldForValue>
+      <suffix>"</suffix>
+    </input>
+    <input type="multiselect" token="sourcehost" searchWhenChanged="true">
+      <label>Source</label>
+      <search>
+        <query>$index$ sourcetype=csv | stats count by source</query>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
+      <choice value="*">All</choice>
+      <prefix>(</prefix>
+      <fieldForLabel>source</fieldForLabel>
+      <fieldForValue>source</fieldForValue>
+      <suffix>)</suffix>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <valuePrefix>source="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> AND </delimiter>
+    </input>
+    <input type="text" token="customfield">
+      <label>Advanced query</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="span">
+      <label>Span</label>
+      <default>30m</default>
+    </input>
+    <input type="multiselect" token="category" searchWhenChanged="true">
+      <label>Category Selection:</label>
+      <choice value="File Opening">File Opening</choice>
+      <choice value="Folder Opening">Folder Opening</choice>
+      <choice value="Device or USB Usage">Device or USB Usage</choice>
+      <choice value="Execution">Execution</choice>
+      <choice value="Web History">Web History</choice>
+      <choice value="Log File">Log File</choice>
+      <choice value="*">All</choice>
+      <delimiter> OR </delimiter>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <initialValue>*</initialValue>
+      <valuePrefix>category="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <fieldForLabel>category</fieldForLabel>
+      <fieldForValue>category</fieldForValue>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="field5" searchWhenChanged="true">
+      <label>GMT Offset</label>
+      <initialValue>0</initialValue>
+      <default>0</default>
+      <choice value="-12">-12:00</choice>
+      <choice value="-11.5">-11:30</choice>
+      <choice value="-11">-11:00</choice>
+      <choice value="-10.5">-10:30</choice>
+      <choice value="-10">-10:00</choice>
+      <choice value="-9.5">-09:30</choice>
+      <choice value="-9">-09:00</choice>
+      <choice value="-8.5">-08:30</choice>
+      <choice value="-8">-08:00</choice>
+      <choice value="-7.5">-07:30</choice>
+      <choice value="-7">-07:00</choice>
+      <choice value="-6.5">-06:30</choice>
+      <choice value="-6">-06:00</choice>
+      <choice value="-5.5">-05:30</choice>
+      <choice value="-5">-05:00</choice>
+      <choice value="-4.5">-04:30</choice>
+      <choice value="-4">-04:00</choice>
+      <choice value="-3.5">-03:30</choice>
+      <choice value="-3">-03:00</choice>
+      <choice value="-2.5">-02:30</choice>
+      <choice value="-2">-02:00</choice>
+      <choice value="-1.5">-01:30</choice>
+      <choice value="-1">-01:00</choice>
+      <choice value="-0.5">-00:30</choice>
+      <choice value="0">00:00</choice>
+      <choice value="0.5">+00:30</choice>
+      <choice value="1">+01:00</choice>
+      <choice value="1.5">+01:30</choice>
+      <choice value="2">+02:00</choice>
+      <choice value="2.5">+02:30</choice>
+      <choice value="3">+03:00</choice>
+      <choice value="3.5">+03:30</choice>
+      <choice value="4">+04:00</choice>
+      <choice value="4.5">+04:30</choice>
+      <choice value="5">+05:00</choice>
+      <choice value="5.5">+05:30</choice>
+      <choice value="6">+06:00</choice>
+      <choice value="6.5">+06:30</choice>
+      <choice value="7">+07:00</choice>
+      <choice value="7.5">+07:30</choice>
+      <choice value="8">+08:00</choice>
+      <choice value="8.5">+08:30</choice>
+      <choice value="9">+09:00</choice>
+      <choice value="9.5">+09:30</choice>
+      <choice value="10">+10:00</choice>
+      <choice value="10.5">+10:30</choice>
+      <choice value="11">+11:00</choice>
+      <choice value="11.5">+11:30</choice>
+      <choice value="12">+12:00</choice>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Count of Category by Time</title>
+      <chart>
+        <search>
+          <query>$index$ $customfield$ $sourcehost$ sourcetype=csv | eval category=case(match(_raw,"LNK"),"File Opening",match(_raw,"URL:file:///"),"File Opening",match(_raw,"opened by"),"File Opening",match(_raw,"CreateDate"),"File Opening",match(_raw,"visited file://"),"File Opening",match(_raw,".lnk"),"File Opening",match(_raw,"Recently opened file"),"File Opening",match(_raw,"file:///"),"File Opening",match(_raw,"Recently open file of extension"),"File Opening",match(_raw,"File Opened"),"File Opening",match(_raw,"Shortcut LNK"),"File Opening",match(_raw,"RecentDocs key"),"File Opening",match(_raw,"typed the following cmd"),"Execution",match(_raw,"CMD typed"),"Execution",match(_raw,"RunMRU key"),"Execution",match(_raw,"RunMRU"),"Execution",match(_raw,"UEME_RUNPIDL"),"Execution",match(_raw,".pf"),"Execution",match(_raw,"Last run"),"Execution",match(_raw,"MUICache"),"Execution",match(_raw,"PRE"),"Execution",match(_raw,"UserAssist key"),"Execution",match(_raw,"Time of Launch"),"Execution",match(_raw,"UEME_"),"Execution",match(_raw,"Prefetch"),"Execution",match(_raw,"XP Prefetch"),"Execution",match(_raw,"UEME_RUNPATH"),"Execution",match(_raw,"was executed"),"Execution",match(_raw,"Firefox 3 History"),"Web History",match(_raw,"WEBHIST"),"Web History",match(_raw,"Internet Explorer"),"Web History",match(_raw,"URL"),"Web History",match(_raw,"http://"),"Web History",match(_raw,"LSO"),"Web History",match(_raw,"Flash Cookie"),"Web History",match(_raw,"visited"),"Web History",match(_raw,"Log"),"Log File",match(_raw,"XP Firewall Log"),"Log File",match(_raw,"Recycle"),"Deleted Data",match(_raw,"Deleted"),"Deleted Data",match(_raw,"Drive last mounted"),"Device or USB Usage",match(_raw,"setupapi log"),"Device or USB Usage",match(_raw,"removeablemedia"),"Device or USB Usage",match(_raw,"usb"),"Device or USB Usage",match(_raw,"volume mounted"),"Device or USB Usage",match(_raw,"mountpoints2 key"),"Device or USB Usage",match(_raw,"ShellNoRoam/Bags"),"Folder Opening",match(_raw,"BagMRU"),"Folder Opening",match(_raw,"Folder Opened"),"Folder Opening")|search $category$ |timechart count by category</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Summary of Category</title>
+      <table>
+        <search>
+          <query>$index$ $customfield$ $sourcehost$ sourcetype=csv| eval category=case(match(_raw,"LNK"),"File Opening",match(_raw,"URL:file:///"),"File Opening",match(_raw,"opened by"),"File Opening",match(_raw,"CreateDate"),"File Opening",match(_raw,"visited file://"),"File Opening",match(_raw,".lnk"),"File Opening",match(_raw,"Recently opened file"),"File Opening",match(_raw,"file:///"),"File Opening",match(_raw,"Recently open file of extension"),"File Opening",match(_raw,"File Opened"),"File Opening",match(_raw,"Shortcut LNK"),"File Opening",match(_raw,"RecentDocs key"),"File Opening",match(_raw,"typed the following cmd"),"Execution",match(_raw,"CMD typed"),"Execution",match(_raw,"RunMRU key"),"Execution",match(_raw,"RunMRU"),"Execution",match(_raw,"UEME_RUNPIDL"),"Execution",match(_raw,".pf"),"Execution",match(_raw,"Last run"),"Execution",match(_raw,"MUICache"),"Execution",match(_raw,"PRE"),"Execution",match(_raw,"UserAssist key"),"Execution",match(_raw,"Time of Launch"),"Execution",match(_raw,"UEME_"),"Execution",match(_raw,"Prefetch"),"Execution",match(_raw,"XP Prefetch"),"Execution",match(_raw,"UEME_RUNPATH"),"Execution",match(_raw,"was executed"),"Execution",match(_raw,"Firefox 3 History"),"Web History",match(_raw,"WEBHIST"),"Web History",match(_raw,"Internet Explorer"),"Web History",match(_raw,"URL"),"Web History",match(_raw,"http://"),"Web History",match(_raw,"LSO"),"Web History",match(_raw,"Flash Cookie"),"Web History",match(_raw,"visited"),"Web History",match(_raw,"Log"),"Log File",match(_raw,"XP Firewall Log"),"Log File",match(_raw,"Recycle"),"Deleted Data",match(_raw,"Deleted"),"Deleted Data",match(_raw,"Drive last mounted"),"Device or USB Usage",match(_raw,"setupapi log"),"Device or USB Usage",match(_raw,"removeablemedia"),"Device or USB Usage",match(_raw,"usb"),"Device or USB Usage",match(_raw,"volume mounted"),"Device or USB Usage",match(_raw,"mountpoints2 key"),"Device or USB Usage",match(_raw,"ShellNoRoam/Bags"),"Folder Opening",match(_raw,"BagMRU"),"Folder Opening",match(_raw,"Folder Opened"),"Folder Opening")|search $category$ |table _time, source, category, _raw | sort by _time ASC</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Summary of Category</title>
+      <chart>
+        <search>
+          <query>$index$ $customfield$ $sourcehost$ sourcetype=csv| eval category=case(match(_raw,"LNK"),"File Opening",match(_raw,"URL:file:///"),"File Opening",match(_raw,"opened by"),"File Opening",match(_raw,"CreateDate"),"File Opening",match(_raw,"visited file://"),"File Opening",match(_raw,".lnk"),"File Opening",match(_raw,"Recently opened file"),"File Opening",match(_raw,"file:///"),"File Opening",match(_raw,"Recently open file of extension"),"File Opening",match(_raw,"File Opened"),"File Opening",match(_raw,"Shortcut LNK"),"File Opening",match(_raw,"RecentDocs key"),"File Opening",match(_raw,"typed the following cmd"),"Execution",match(_raw,"CMD typed"),"Execution",match(_raw,"RunMRU key"),"Execution",match(_raw,"RunMRU"),"Execution",match(_raw,"UEME_RUNPIDL"),"Execution",match(_raw,".pf"),"Execution",match(_raw,"Last run"),"Execution",match(_raw,"MUICache"),"Execution",match(_raw,"PRE"),"Execution",match(_raw,"UserAssist key"),"Execution",match(_raw,"Time of Launch"),"Execution",match(_raw,"UEME_"),"Execution",match(_raw,"Prefetch"),"Execution",match(_raw,"XP Prefetch"),"Execution",match(_raw,"UEME_RUNPATH"),"Execution",match(_raw,"was executed"),"Execution",match(_raw,"Firefox 3 History"),"Web History",match(_raw,"WEBHIST"),"Web History",match(_raw,"Internet Explorer"),"Web History",match(_raw,"URL"),"Web History",match(_raw,"http://"),"Web History",match(_raw,"LSO"),"Web History",match(_raw,"Flash Cookie"),"Web History",match(_raw,"visited"),"Web History",match(_raw,"Log"),"Log File",match(_raw,"XP Firewall Log"),"Log File",match(_raw,"Recycle"),"Deleted Data",match(_raw,"Deleted"),"Deleted Data",match(_raw,"Drive last mounted"),"Device or USB Usage",match(_raw,"setupapi log"),"Device or USB Usage",match(_raw,"removeablemedia"),"Device or USB Usage",match(_raw,"usb"),"Device or USB Usage",match(_raw,"volume mounted"),"Device or USB Usage",match(_raw,"mountpoints2 key"),"Device or USB Usage",match(_raw,"ShellNoRoam/Bags"),"Folder Opening",match(_raw,"BagMRU"),"Folder Opening",match(_raw,"Folder Opened"),"Folder Opening")|search $category$ |stats count by source</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</form>
