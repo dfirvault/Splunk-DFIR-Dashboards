@@ -1,0 +1,731 @@
+<!-- 
+  Created by: Jacob Wilson
+  Date: 20250614 
+  Contact: dfirvault@gmail.com, dfirvault.com
+-->
+<form theme="dark">
+  <label>DFIR Windows Security Event Overview</label>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="field1" searchWhenChanged="false">
+      <label>Time</label>
+      <default>
+        <earliest>0</earliest>
+        <latest></latest>
+      </default>
+    </input>
+    <input type="dropdown" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <search>
+        <query>index=* | stats count by index</query>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
+      <choice value="">None</choice>
+      <prefix>index="</prefix>
+      <fieldForLabel>index</fieldForLabel>
+      <fieldForValue>index</fieldForValue>
+      <suffix>"</suffix>
+    </input>
+    <input type="multiselect" token="accountname" searchWhenChanged="true">
+      <label>Account_Name</label>
+      <search>
+        <query>$index$ | eval Account_Name=lower(Account_Name) |search $customfield$|stats count by Account_Name</query>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
+      <choice value="*">All</choice>
+      <valuePrefix>Account_Name="</valuePrefix>
+      <valueSuffix>*"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>Account_Name</fieldForLabel>
+      <fieldForValue>Account_Name</fieldForValue>
+    </input>
+    <input type="multiselect" token="computername" searchWhenChanged="true">
+      <label>ComputerName</label>
+      <search>
+        <query>$index$ | eval ComputerName=lower(ComputerName) |search $customfield$|stats count by ComputerName</query>
+        <earliest>0</earliest>
+        <latest></latest>
+      </search>
+      <choice value="*">All</choice>
+      <valuePrefix>ComputerName="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>ComputerName</fieldForLabel>
+      <fieldForValue>ComputerName</fieldForValue>
+    </input>
+    <input type="text" token="customfield">
+      <label>Advanced query</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="span">
+      <label>Span</label>
+      <default>30m</default>
+    </input>
+    <input type="dropdown" token="field5" searchWhenChanged="true">
+      <label>GMT Offset</label>
+      <initialValue>0</initialValue>
+      <default>0</default>
+      <choice value="-12">-12:00</choice>
+      <choice value="-11.5">-11:30</choice>
+      <choice value="-11">-11:00</choice>
+      <choice value="-10.5">-10:30</choice>
+      <choice value="-10">-10:00</choice>
+      <choice value="-9.5">-09:30</choice>
+      <choice value="-9">-09:00</choice>
+      <choice value="-8.5">-08:30</choice>
+      <choice value="-8">-08:00</choice>
+      <choice value="-7.5">-07:30</choice>
+      <choice value="-7">-07:00</choice>
+      <choice value="-6.5">-06:30</choice>
+      <choice value="-6">-06:00</choice>
+      <choice value="-5.5">-05:30</choice>
+      <choice value="-5">-05:00</choice>
+      <choice value="-4.5">-04:30</choice>
+      <choice value="-4">-04:00</choice>
+      <choice value="-3.5">-03:30</choice>
+      <choice value="-3">-03:00</choice>
+      <choice value="-2.5">-02:30</choice>
+      <choice value="-2">-02:00</choice>
+      <choice value="-1.5">-01:30</choice>
+      <choice value="-1">-01:00</choice>
+      <choice value="-0.5">-00:30</choice>
+      <choice value="0">00:00</choice>
+      <choice value="0.5">+00:30</choice>
+      <choice value="1">+01:00</choice>
+      <choice value="1.5">+01:30</choice>
+      <choice value="2">+02:00</choice>
+      <choice value="2.5">+02:30</choice>
+      <choice value="3">+03:00</choice>
+      <choice value="3.5">+03:30</choice>
+      <choice value="4">+04:00</choice>
+      <choice value="4.5">+04:30</choice>
+      <choice value="5">+05:00</choice>
+      <choice value="5.5">+05:30</choice>
+      <choice value="6">+06:00</choice>
+      <choice value="6.5">+06:30</choice>
+      <choice value="7">+07:00</choice>
+      <choice value="7.5">+07:30</choice>
+      <choice value="8">+08:00</choice>
+      <choice value="8.5">+08:30</choice>
+      <choice value="9">+09:00</choice>
+      <choice value="9.5">+09:30</choice>
+      <choice value="10">+10:00</choice>
+      <choice value="10.5">+10:30</choice>
+      <choice value="11">+11:00</choice>
+      <choice value="11.5">+11:30</choice>
+      <choice value="12">+12:00</choice>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Common Event Codes - 10,000 foot view</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype="wineventlog:security" Account_Name!="DWM-*" Account_Name!="UMFD-*" Account_Name!=SYSTEM Account_Name!="LOCAL SERVICE" Account_Name!="NETWORK SERVICE" Account_Name!="*$$" Account_Name!="ANONYMOUS LOGON" Account_Name!="IUSR"
+| eval Trigger=case(EventCode=516, "Audit Logs Modified",EventCode=517, "Audit Logs Modified",EventCode=612, "Audit Logs Modified",EventCode=623, "Audit Logs Modified",EventCode=806, "Audit Logs Modified",EventCode=807, "Audit Logs Modified",EventCode=1101, "Audit Logs Modified",EventCode=1102, "Audit Logs Modified",EventCode=4612, "Audit Logs Modified",EventCode=4621, "Audit Logs Modified",EventCode=4694, "Audit Logs Modified",EventCode=4695, "Audit Logs Modified",EventCode=4715, "Audit Logs Modified",EventCode=4719, "Audit Logs Modified",EventCode=4817, "Audit Logs Modified",EventCode=4885, "Audit Logs Modified",EventCode=4902, "Audit Logs Modified",EventCode=4906, "Audit Logs Modified",EventCode=4907, "Audit Logs Modified",EventCode=4912, "Audit Logs Modified", EventCode=642, "Account Modification",EventCode=646, "Account Modification",EventCode=685, "Account Modification",EventCode=4738, "Account Modification",EventCode=4742, "Account Modification",EventCode=4781, "Account Modification", EventCode=1102, "Audit Logs Cleared/Deleted",EventCode=517, "Audit Logs Cleared/Deleted", EventCode=628, "Passwords Changed",EventCode=627, "Passwords Changed",EventCode=4723, "Passwords Changed",EventCode=4724, "Passwords Changed", EventCode=528, "Successful Logons",EventCode=540, "Successful Logons",EventCode=4624, "Successful Logons", EventCode=4625, "Failed Logons",EventCode=529, "Failed Logons",EventCode=530, "Failed Logons",EventCode=531, "Failed Logons",EventCode=532, "Failed Logons",EventCode=533, "Failed Logons",EventCode=534, "Failed Logons",EventCode=535, "Failed Logons",EventCode=536, "Failed Logons",EventCode=537, "Failed Logons",EventCode=539, "Failed Logons", EventCode=576, "Escalation of Privileges",EventCode=4672, "Escalation of Privileges",EventCode=577, "Escalation of Privileges",EventCode=4673, "Escalation of Privileges",EventCode=578, "Escalation of Privileges",EventCode=4674, "Escalation of Privileges") 
+| stats earliest(_time) as Initial_Occurrence latest(_time) as Latest_Occurrence values(Account_Name) as Account_Names values(host) as Hosts count sparkline by Trigger
+| sort - count
+| convert ctime(Initial_Occurrence) ctime(Latest_Occurrence)</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Trigger">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Count of Account_Name</title>
+      <chart>
+        <search>
+          <query>$index$  |search $accountname$ $computername$ $customfield$|stats count by Account_Name</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Count of ComputerName</title>
+      <chart>
+        <search>
+          <query>$index$  |search $accountname$ $computername$ $customfield$|stats count by ComputerName</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Failed Logon Attempts</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:security" EventCode=4625 $accountname$ $customfield$ $computername$
+| eval hammer=_time
+| eval Workstation_Name=lower(Workstation_Name)
+| eval host=lower(host)
+| bucket span=5m hammer 
+| stats count sparkline by Account_Name, host, hammer, Workstation_Name
+| rename hammer as "5 minute blocks" host as "Target Host" Workstation_Name as "sourcetype Host"
+| convert ctime("5 minute blocks")</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Account_Name">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Target Host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="sourcetype Host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Timechart of Failed Attempts to Logon</title>
+      <chart>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:security" EventCode=4625 $accountname$ $computername$ $customfield$
+| timechart span=1h count by host</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Successful Logons</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:security" EventCode=4624 (Logon_Type=2 OR Logon_Type=7 OR Logon_Type=10 OR Logon_Type=11 OR Logon_Type=3) Account_Name!="DWM-*" Account_Name!="UMFD-*" $accountname$ $computername$ $customfield$
+| eval Workstation_Name=lower(Workstation_Name)
+| eval host=lower(host)
+| eval hammer=_time 
+| bucket span=1d@d hammer 
+| stats values(Logon_Type) as "Logon Type" count sparkline by Account_Name host, hammer, Workstation_Name
+| rename hammer as "Start of Day" host as "Target Host" Workstation_Name as "sourcetype Host"
+| convert ctime("Start of Day")
+| sort - "Start of Day"</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Target Host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="sourcetype Host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Account_Name">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Timechart of Successful Logons</title>
+      <chart>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:security" EventCode=4624 (Logon_Type=2 OR Logon_Type=7 OR Logon_Type=10 OR Logon_Type=11 OR Logon_Type=3) Account_Name!="DWM-*" Account_Name!="UMFD-*" $accountname$ $computername$ $customfield$
+| timechart span=1h count by host</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Failed Login Events</title>
+      <input type="multiselect" token="multi_select1" searchWhenChanged="true">
+        <label>Field Section:</label>
+        <choice value="_time">_time</choice>
+        <choice value="host">host</choice>
+        <choice value="Account_Name">Account_Name</choice>
+        <choice value="src_ip">src_ip</choice>
+        <choice value="EventCode">EventCode</choice>
+        <choice value="Logon_Type">Logon_Type</choice>
+        <choice value="Logon_Process">Logon_Process</choice>
+        <delimiter>, </delimiter>
+        <default>host,Logon_Type,EventCode,src_ip,Account_Name</default>
+      </input>
+      <table>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:Security" $accountname$ $computername$ $customfield$ TaskCategory=Logon Keywords="Audit Failure" | fillnull value=* src_ip EventCode | stats count by $multi_select1$ 
+| sort -count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Successful Login Events</title>
+      <input type="multiselect" token="multi_select2" searchWhenChanged="true">
+        <label>Field Section:</label>
+        <choice value="_time">_time</choice>
+        <choice value="host">host</choice>
+        <choice value="Account_Name">Account_Name</choice>
+        <choice value="src_ip">src_ip</choice>
+        <choice value="EventCode">EventCode</choice>
+        <choice value="Logon_Type">Logon_Type</choice>
+        <choice value="Logon_Process">Logon_Process</choice>
+        <choice value="Process_Name">Process_Name</choice>
+        <delimiter>, </delimiter>
+        <default>host,Account_Name,src_ip,Logon_Type,EventCode</default>
+      </input>
+      <table>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:Security" $customfield$ TaskCategory=Logon Keywords="Audit Success" Account_Name!="DWM-*" Account_Name!="UMFD-*" Account_Name!=SYSTEM Account_Name!="LOCAL SERVICE" Account_Name!="NETWORK SERVICE" Account_Name!="*$$" Account_Name!="ANONYMOUS LOGON" Account_Name!="IUSR" $accountname$  $computername$ $customfield$| fillnull value=* src_ip EventCode Logon_Type, Logon_Process, Process_Name | stats count by $multi_select2$ 
+| sort -count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Powershell activity</title>
+      <table>
+        <search>
+          <query>$index$ TaskCategory="Execute a Remote Command" |search Path !=""| search $computername$ $customfield$|eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")|  table time_utc, time_gmt_$field5$, Path, Value, parameters | sort -_time DESC</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Processes</title>
+      <table>
+        <search>
+          <query>$index$ Process_Name="*" $accountname$  |search $accountname$ $computername$ $customfield$| eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")| table time_utc, time_gmt_$field5$, Account_Name, Process_Name, ComputerName, EventCode</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>RDP Success Events</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$| search TaskCategory=Logon  Keywords="Audit Success" | eval Destination_Host=host    |eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")| table  time_utc, time_gmt_$field5$, EventCode, EventType, Destination_Host, Account_Domain, Account_Name, Source_Network_Address, Workstation_Name</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>RDP Failure Events</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$| search $accountname$ TaskCategory=Logon  Keywords="Audit Failure" | eval Destination_Host=host    | eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")|table  time_utc, time_gmt_$field5$, EventCode, EventType, Destination_Host, Account_Domain, Account_Name, Source_Network_Address, Workstation_Name</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Newly Created Accounts</title>
+      <event>
+        <search>
+          <query>$index$ |search EventCode=4720 $customfield$</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="list.drilldown">none</option>
+        <option name="list.wrap">1</option>
+        <option name="maxLines">5</option>
+        <option name="raw.drilldown">full</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">0</option>
+        <option name="table.drilldown">all</option>
+        <option name="table.sortDirection">asc</option>
+        <option name="table.wrap">1</option>
+        <option name="type">list</option>
+      </event>
+    </panel>
+    <panel>
+      <event>
+        <title>Evidence of ZeroLogon Activity</title>
+        <search>
+          <query>$index$  $computername$ Account_Name="ANONYMOUS LOGON" EventCode=4742 $customfield$  |eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")|  table time_utc, time_gmt_$field5$, host, Account_Domain,SAM_Account_Name</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="list.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </event>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Accounts that were created and then deleted in under an hour</title>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:Security" (EventCode=630 OR EventCode=4726 OR EventCode=624 OR EventCode=4720) $customfield$ | eval status=case(EventCode=630, "Account Deletion", EventCode=4726, "Account Deletion", EventCode=624, "Account Creation", EventCode=4720, "Account Creation") |transaction Account_Name startswith=status="Account Creation" endswith=status="Account Deletion" maxevents=2  | where duration &lt; 3600 | table host, src_Account_Name, Account_Name, Account_Domain, _time</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Accounts that were created</title>
+        <search>
+          <query>$index$ sourcetype="WinEventLog:Security" (EventCode=630 OR EventCode=4726 OR EventCode=624 OR EventCode=4720) $customfield$ |eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")|  table host, time_utc, time_gmt_$field5$,src_Account_Name, Account_Name, Account_Domain, EventCode</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Accounts added/removed to Domain Admins and other sensitive groups.</title>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype=WinEventLog:Security (EventCode=4728 OR EventCode=4729) (Group_Name="*Domain Admins*" OR Group_Name="*OtherGroup*")
+|eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")| rename src_Account_Name AS "Actioned By", name as "Action Taken"
+| table host "Actioned By" Account_Name "Action Taken" Group_Name Account_Domain  time_utc, time_gmt_$field5$,
+| sort - time_utc</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Accounts that had their password's changed not by themselves</title>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype="WinEventLog:Security" (EventCode IN ("628","627","4723","4724"))
+| eval time_utc=_time+(3600*0)|eval time_utc=strftime(time_utc,"%Y-%m-%d %H:%M:%S")|
+eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(time_gmt_$field5$,"%Y-%m-%d %H:%M:%S")| eval s_Account_Namename = mvindex(Account_Name, 0), t_Account_Namename = mvindex(Account_Name, 1), s_domain = mvindex(Account_Domain, 0), t_domain = mvindex(Account_Domain, 1)
+| eval s_output = s_Account_Namename."@".s_domain, t_output = t_Account_Namename."@".t_domain
+| where s_Account_Namename!=t_Account_Namename
+| table host, s_output, t_output, time_utc, time_gmt_$field5$</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Windows Authentication events</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype="wineventlog:security" action=success (EventCode=4624 OR EventCode=4634 ) Account_Name!="anonymous logon" Account_Name!="DWM-*" Account_Name!="UMFD-*" Account_Name!=SYSTEM Account_Name!=*$ (Logon_Type=2 OR Logon_Type=7 OR Logon_Type=10)
+| convert timeformat="%a %B %d %Y" ctime(_time) AS Date 
+| streamstats earliest(_time) AS login, latest(_time) AS logout by Date, host, Account_Name
+| eval session_duration=logout-login
+| where session_duration &gt; 5
+| eval h=floor(session_duration/3600) 
+| eval m=floor((session_duration-(h*3600))/60) 
+| eval SessionDuration=h."h ".m."m " 
+| convert timeformat=" %m/%d/%y - %I:%M %P" ctime(login) AS login 
+| convert timeformat=" %m/%d/%y - %I:%M %P" ctime(logout) AS logout 
+| stats count AS auth_event_count, earliest(login) as login, max(SessionDuration) AS sesion_duration, latest(logout) as logout, values(Logon_Type) AS logon_types by Date, host, Account_Name
+| sort + login</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Account_Name">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Privileged Account Events</title>
+      <input type="multiselect" token="multi_select3" searchWhenChanged="true">
+        <label>Field Section:</label>
+        <choice value="_time">_time</choice>
+        <choice value="host">host</choice>
+        <choice value="Account_Name">Account_Name</choice>
+        <choice value="signature">signature</choice>
+        <choice value="vendor_privilege">vendor_privilege</choice>
+        <choice value="member_id">member_id</choice>
+        <choice value="Keywords">Keywords</choice>
+        <default>Account_Name</default>
+        <delimiter>, </delimiter>
+      </input>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype="WinEventLog:Security" $customfield$ TaskCategory="Special Logon" Account_Name!="DWM-*" Account_Name!="UMFD-*" Account_Name!=SYSTEM Account_Name!="LOCAL SERVICE" Account_Name!="NETWORK SERVICE" Account_Name!="*$" Account_Name!="ANONYMOUS LOGON" Account_Name!="IUSR" | stats count by $multi_select3$ | sort -count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>
