@@ -98,6 +98,7 @@ This project is continuously improved. If you have:
 **Jacob Wilson**  
 📧 dfirvault@gmail.com
 [https://www.linkedin.com/in/jacob--wilson/](https://www.linkedin.com/in/jacob--wilson/)
+
 **More information:**
 [https://dfirvault.com](https://dfirvault.com)
 ---
