@@ -2,6 +2,10 @@
 
 This repository contains a curated set of tested and production-ready **Splunk dashboard XML files** designed specifically for **Digital Forensics and Incident Response (DFIR)** investigations.
 
+![image](https://github.com/user-attachments/assets/80c86773-44cd-4f7c-b2f5-beedd1790a24)
+![image](https://github.com/user-attachments/assets/2117681e-99aa-4556-b759-81f2a0247956)
+
+
 ## 📦 What’s Inside
 
 Over the years, during numerous real-world DFIR cases, these dashboards were developed, refined, and tested extensively. Each XML file represents a complete Splunk dashboard that provides insights into log data commonly collected during investigations.
