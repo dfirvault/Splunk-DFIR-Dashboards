@@ -9,6 +9,7 @@ This repository contains a curated set of tested and production-ready **Splunk d
 ## 📦 What’s Inside
 
 Over the years, during numerous real-world DFIR cases, these dashboards were developed, refined, and tested extensively. Each XML file represents a complete Splunk dashboard that provides insights into log data commonly collected during investigations.
+Credit: https://github.com/Truvis/SplunkDashboards
 
 ### ✅ Features
 
