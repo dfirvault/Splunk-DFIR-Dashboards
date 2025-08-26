@@ -1,3 +1,22 @@
+# DFIR Splunk App
+
+**Version:** 0.1 (Initial Release)
+**Status:** :white_check_mark: Released
+**App Name:** `DFIR`
+
+## Overview
+
+The **DFIR Splunk App** is now officially released as **v0.1**. This initial version provides a streamlined, easy-to-install package containing all essential dashboards for Digital Forensics and Incident Response (DFIR) operations.
+
+This app is designed to simplify deployment and ensure consistency across your Splunk environments by bundling everything into a single, installable unit.
+
+1.  Download the latest `DFIR.spl` file from https://github.com/dfirvault/Splunk-DFIR-Dashboards/releases/tag/v0.1.
+2.  In your Splunk Web interface, navigate to **Apps > Manage Apps**.
+3.  Click on **Install app from file**.
+4.  Click **Choose File** and select the downloaded `dfir-X.X.X.spl` file.
+5.  Click **Upload**.
+6.  Restart Splunk if prompted.
+
 # 🕵️‍♂️ Splunk DFIR Dashboard Collection
 
 This repository contains a curated set of tested and production-ready **Splunk dashboard XML files** designed specifically for **Digital Forensics and Incident Response (DFIR)** investigations.
