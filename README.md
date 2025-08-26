@@ -13,7 +13,7 @@ This app is designed to simplify deployment and ensure consistency across your S
 1.  Download the latest `DFIR.spl` file from https://github.com/dfirvault/Splunk-DFIR-Dashboards/releases/tag/v0.1.
 2.  In your Splunk Web interface, navigate to **Apps > Manage Apps**.
 3.  Click on **Install app from file**.
-4.  Click **Choose File** and select the downloaded `dfir-X.X.X.spl` file.
+4.  Click **Choose File** and select the downloaded `DFIR.spl` file.
 5.  Click **Upload**.
 6.  Restart Splunk if prompted.
 
