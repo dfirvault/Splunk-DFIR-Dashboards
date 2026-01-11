@@ -68,20 +68,23 @@ Each `.xml` file in this repo is a complete dashboard definition. You can:
 
 ## 🚀 Getting Started
 
-### 1. Install Splunk Enterprise (if not already)
+### Installation STEPS
+
+**Step 1 - Install Splunk**
 Download and install from: [https://www.splunk.com](https://www.splunk.com)
+![Image](https://github.com/user-attachments/assets/32017583-9d78-4ec2-98f8-199e39a3d91a)
 
-### 2. Ingest Your Data
-Use the **Add Data** interface or CLI to import your logs into a defined index.
+**Step 2 - Install DFIR Splunk App**
 
-### 3. Import Dashboards
-- Go to **Dashboards > Create New Dashboard**
-- Choose **"Import XML"**, then paste contents of a `.xml` file from this repo.
+![Image](https://github.com/user-attachments/assets/5d0fa337-139a-4fce-a975-90fe8c94498c)
 
-### 4. Use It!
-- Open the dashboard.
-- Select your case index from the dropdown.
-- Review logs, timelines, process trees, event IDs, artifacts, and much more.
+**Step 3 - Create index and Ingest Data**
+
+![Image](https://github.com/user-attachments/assets/4a9ec6f6-924d-4d8a-9236-a7ed92b6f5d5)
+
+**Step 4 - Refresh Dashboard**
+
+![Image](https://github.com/user-attachments/assets/6ce9a7a5-1408-40f6-9590-2b8a1b5eacca)
 
 ---
 
