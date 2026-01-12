@@ -1,10 +1,10 @@
-<!-- 
-  Created by: Jacob Wilson
-  Date: 20250614 
+<!--
+  Created by: Jacob Wilson (original)
+  Date: January 2026
+  Purpose: Expanded DFIR Windows Security Event Overview with broad IOC coverage
   Contact: dfirvault@gmail.com, dfirvault.com, https://shorturl.at/QMT5M
--->
-<form theme="dark" version="1">
-  <label>DFIR Windows Security Event Overview</label>
+--><form theme="dark" version="1">
+  <label>DFIR Windows Security + IOC Hunting Dashboard</label>
   <fieldset submitButton="true" autoRun="true">
     <input type="time" token="field1" searchWhenChanged="false">
       <label>Time</label>
@@ -125,6 +125,24 @@
       <choice value="11.5">+11:30</choice>
       <choice value="12">+12:00</choice>
     </input>
+    <input type="dropdown" token="ioc_category" searchWhenChanged="true">
+      <label>IOC Category (optional filter)</label>
+      <choice value="*">All Categories</choice>
+      <choice value="network">Network (IP/Domain/URL/Onion)</choice>
+      <choice value="crypto">Cryptocurrency Addresses</choice>
+      <choice value="hash">Hashes (MD5/SHA1/SHA256)</choice>
+      <choice value="malware_tool">Malware Tools (Mimikatz, Cobalt, Empire...)</choice>
+      <choice value="cred_access">Credential Access (sekurlsa, lsass, procdump...)</choice>
+      <choice value="c2_shell">C2 and Shells (beacon, reverse_shell, meterpreter...)</choice>
+      <choice value="lolbas">LOLBAS and Suspicious Commands</choice>
+      <choice value="persistence">Persistence (schtasks, registry_run...)</choice>
+      <choice value="lateral">Lateral Movement (psexec, wmic, winrm...)</choice>
+      <choice value="defense_evasion">Defense Evasion (amsi bypass, wevtutil...)</choice>
+      <choice value="exfiltration">Exfiltration (rclone, scp...)</choice>
+      <choice value="ransomware">Ransomware (vssadmin delete, .lockbit...)</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
   </fieldset>
   <row>
     <panel>
@@ -160,7 +178,7 @@
       <title>Count of Account_Name</title>
       <chart>
         <search>
-          <query>$index$  |search $accountname$ $computername$ $customfield$|stats count by Account_Name</query>
+          <query>$index$ $accountname$ $computername$ $customfield$ |search $accountname$ $computername$ $customfield$|stats count by Account_Name</query>
           <earliest>0</earliest>
           <latest></latest>
           <sampleRatio>1</sampleRatio>
@@ -366,7 +384,7 @@
       <title>Timechart of Successful Logons</title>
       <chart>
         <search>
-          <query>$index$ sourcetype="WinEventLog:security" EventCode=4624 (Logon_Type=2 OR Logon_Type=7 OR Logon_Type=10 OR Logon_Type=11 OR Logon_Type=3) Account_Name!="DWM-*" Account_Name!="UMFD-*" $accountname$ $computername$ $customfield$
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype="WinEventLog:security" EventCode=4624 (Logon_Type=2 OR Logon_Type=7 OR Logon_Type=10 OR Logon_Type=11 OR Logon_Type=3) Account_Name!="DWM-*" Account_Name!="UMFD-*" $accountname$ $computername$ $customfield$
 | timechart span=1h count by host</query>
           <earliest>$field1.earliest$</earliest>
           <latest>$field1.latest$</latest>
@@ -725,6 +743,452 @@ eval time_gmt_$field5$=_time+(3600*$field5$)| eval time_gmt_$field5$=strftime(ti
         <option name="rowNumbers">false</option>
         <option name="totalsRow">false</option>
         <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Potential IOC Matches - Overview (High Level)</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:Security", "WinEventLog:Microsoft-Windows-Sysmon/Operational", "WinEventLog:PowerShell*") $accountname$ $computername$ $customfield$
+| rex field=_raw "(?i)(?&lt;ipv4_address&gt;\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)|(?&lt;domain&gt;(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})|(?&lt;md5&gt;[a-f0-9]{32})|(?&lt;sha256&gt;[a-f0-9]{64})|(?&lt;mimikatz&gt;mimikatz)|(?&lt;cobalt&gt;cobalt\.strike)|(?&lt;beacon&gt;beacon)|(?&lt;lsass&gt;lsass\.exe)|(?&lt;sekurlsa&gt;sekurlsa::logonpasswords)|(?&lt;procdump&gt;procdump)|(?&lt;rundll32&gt;rundll32)|(?&lt;bitsadmin&gt;bitsadmin.*transfer)|(?&lt;schtasks&gt;schtasks.*create)|(?&lt;psexec&gt;psexec)"
+| eval ioc_type=coalesce(ipv4_address, domain, md5, sha256, mimikatz, cobalt, beacon, lsass, sekurlsa, procdump, rundll32, bitsadmin, schtasks, psexec, "none")
+| where ioc_type!="none"
+| stats count sparkline by ioc_type, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Malware Tools and C2 Keywords (Mimikatz, Cobalt, Empire, Beacon...)</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype IN ("WinEventLog:*", "*PowerShell*") $customfield$
+| search "mimikatz" OR "cobalt.strike" OR "beacon" OR "empire" OR "metasploit" OR "nishang" OR "covenant" OR "poshc2" OR "merlin" OR "meterpreter" OR "rubeus" OR "sekurlsa" OR "dcsync"
+| eval tool=case(match(_raw, "(?i)mimikatz"),"Mimikatz", match(_raw, "(?i)cobalt"),"Cobalt Strike", match(_raw, "(?i)beacon"),"Beacon", 1=1, "Other Suspicious")
+| stats count sparkline values(Account_Name) as Users values(host) as Hosts by tool
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Potential Beaconing Patterns</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype="*network*" $accountname$ $computername$ $customfield$
+| bucket _time span=5m
+| stats count by _time, dest_ip, host
+| eventstats stdev(count) as dev avg(count) as avg by dest_ip
+| where dev &lt; 2 AND avg &gt; 5
+| stats count sparkline by dest_ip, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Credential Dumping Artifacts (LSASS, Procdump, NTDS.dit...)</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:Security", "*Sysmon*") $accountname$ $computername$ $customfield$
+| search "lsass.exe" OR "procdump" OR "pwdump" OR "ntds.dit" OR "sekurlsa" OR "dcsync" OR "shadowcopy" OR "vssadmin.*delete"
+| eval technique=case(match(_raw,"lsass"),"LSASS Access/Dump", match(_raw,"procdump|pwdump"),"ProcDump/PwDump", match(_raw,"ntds.dit|dcsync"),"NTDS/DCSync", match(_raw,"shadowcopy|vssadmin"),"VSS/Shadow Copy Abuse", 1=1, "Other")
+| stats count sparkline by technique, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>LOLBAS and Suspicious Command Execution</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*", "*Sysmon*") $accountname$ $computername$ $customfield$
+| search "bitsadmin.*transfer" OR "certutil.*-decode" OR "rundll32" OR "regsvr32" OR "mshta" OR "cmstp" OR "wmic.*process.call" OR "schtasks.*create"
+| eval lolbas_type=case(match(_raw,"bitsadmin"),"BITSAdmin Download", match(_raw,"certutil.*decode"),"Certutil Decode", match(_raw,"rundll32|regsvr32|mshta"),"LOLBAS Proxy Execution", 1=1, "Other")
+| stats count sparkline by lolbas_type, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Reverse Shells and Web Shells</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*", "*Sysmon*", "*PowerShell*") $accountname$ $computername$ $customfield$
+| search "reverse_shell" OR "bind_shell" OR "nc.*-e" OR "netcat.*-e" OR "bash.*-i" OR "python.*socket" OR "php.*exec.*socket" OR "passthru\(" OR "shell_exec\(" OR "system\(" OR "cmd\.asp" OR "weevely" OR "eval.*base64_decode" OR "jsp_shell" OR "asp_shell"
+| eval shell_type=case(match(_raw,"nc|netcat|bash|python|php"),"Reverse/Bind Shell", match(_raw,"passthru|shell_exec|system|cmd.asp|weevely|eval|jsp|asp"),"Web Shell", 1=1, "Other")
+| stats count sparkline values(Account_Name) as Users values(host) as Hosts by shell_type
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Persistence Mechanisms</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:Security", "*Sysmon*") $accountname$ $computername$ $customfield$
+| search "schtasks.*create" OR "reg.add.*HKCU.*Run" OR "wmi_persistence" OR "Image.File.Execution.Options" OR "SilentProcessExit" OR "AppData.*Startup" OR "cronjob" OR "LaunchDaemons" OR "LaunchAgents"
+| eval persistence_type=case(match(_raw,"schtasks"),"Scheduled Task", match(_raw,"reg.add.*Run"),"Registry Run Key", match(_raw,"Startup|LaunchDaemons|LaunchAgents"),"Startup Folder/Agents", 1=1, "Other")
+| stats count sparkline by persistence_type, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Lateral Movement Indicators</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*", "*Sysmon*") $accountname$ $computername$ $customfield$
+| search "psexec" OR "wmic.*/node:" OR "winrm.*invoke" OR "wmiexec" OR "dcomexec" OR "smbexec" OR "crackmapexec" OR "impacket" OR "rdp_enable" OR "smbclient" OR "winexe" OR "at.exe" OR "sc.*create"
+| eval lateral_type=case(match(_raw,"psexec|winexe"),"PsExec/Winexe", match(_raw,"wmic|wmiexec"),"WMIC Exec", match(_raw,"winrm|evil-winrm"),"WinRM", match(_raw,"smb|rdp"),"SMB/RDP", 1=1, "Other")
+| stats count sparkline values(host) as Hosts by lateral_type, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Defense Evasion Techniques</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*", "*Sysmon*", "*PowerShell*") $accountname$ $computername$ $customfield$
+| search "amsi.*bypass" OR "uac.*bypass" OR "process.*hollow" OR "etwbypass" OR "Set-MpPreference.*Disable" OR "wevtutil.cl" OR "fsutil.usn.deletejournal" OR "timestomp"
+| eval evasion_type=case(match(_raw,"amsi|uac|etw"),"Bypass (AMSI/UAC/ETW)", match(_raw,"process.*hollow"),"Process Hollowing", match(_raw,"wevtutil|fsutil|timestomp"),"Log Tampering/Timestomp", 1=1, "Other")
+| stats count sparkline by evasion_type, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Exfiltration Indicators</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*", "*Sysmon*") $accountname$ $computername$ $customfield$
+| search "rclone" OR "dnscat2" OR "curl.*-T" OR "pastebin\.com" OR "anonfiles\.com" OR "mega\.nz" OR "7z.a.-p" OR "scp.*@" OR "sftp.*@" OR "ftp.*put" OR "rsync.*@" OR "dropboxusercontent.com" OR "onedrive.live.com"
+| eval exfil_type=case(match(_raw,"rclone|dnscat2"),"Rclone/DNSCat", match(_raw,"curl|scp|sftp|ftp|rsync"),"Upload Commands", match(_raw,"pastebin|anonfiles|mega|dropbox|onedrive"),"Cloud Storage Sites", 1=1, "Other")
+| stats count sparkline by exfil_type, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Ransomware Indicators</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*", "*Sysmon*") $accountname$ $computername$ $customfield$
+| search "vssadmin.*delete" OR "wbadmin.delete" OR "bcedit.*recoveryenabled.No" OR "README-TO-DECRYPT.txt" OR "DECRYPT_INSTRUCTIONS.txt" OR "\.lockbit" OR "\.alpha" OR "\.play" OR "\.clop" OR "conti" OR "ryuk" OR "net.stop.*(sql|veeam)"
+| eval ransom_type=case(match(_raw,"vssadmin|wbadmin|bcedit"),"Shadow Copy/Backup Delete", match(_raw,"README|DECRYPT"),"Ransom Notes", match(_raw,"\.lockbit|\.alpha|\.play|\.clop"),"File Extensions", match(_raw,"conti|ryuk"),"Specific Families", 1=1, "Other")
+| stats count sparkline by ransom_type, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Living-off-the-Land Binaries (Expanded)</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$ sourcetype IN ("WinEventLog:*","*Sysmon*") 
+| search "regsvr32" OR "mshta" OR "cmstp" OR "installutil" OR "msbuild" OR "odbcconf" OR "hh.exe" OR "forfiles" OR "pubprn.vbs" OR "syncappvpublishingserver" OR "regasm" OR "regsvcs" OR "xwizard" OR "makecab" OR "expand" OR "extrac32"
+| eval lolbin=case(
+match(_raw,"regsvr32"),"regsvr32",
+match(_raw,"mshta"),"mshta",
+match(_raw,"cmstp"),"cmstp",
+match(_raw,"installutil"),"installutil",
+match(_raw,"msbuild"),"msbuild",
+match(_raw,"odbcconf"),"odbcconf",
+match(_raw,"hh.exe"),"hh.exe",
+match(_raw,"forfiles"),"forfiles",
+match(_raw,"pubprn"),"pubprn.vbs",
+match(_raw,"syncappv"),"syncappv",
+match(_raw,"regasm|regsvcs"),"regasm/regsvcs",
+match(_raw,"xwizard"),"xwizard",
+match(_raw,"makecab|expand|extrac32"),"cabinet abuse",
+1=1,"other")
+| stats count sparkline by lolbin, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>PowerShell Abuse (Obfuscation + Living Off PS)</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype="*PowerShell*" $accountname$ $computername$ $customfield$
+| search "-enc" OR "frombase64string" OR "iex" OR "invoke-expression" OR "downloadstring" OR "new-object net.webclient" OR "add-mppreference" OR "disablebehaviormonitoring" OR "amsiutils" OR "reflection.assembly"
+| eval ps_abuse=case(
+match(_raw,"-enc|frombase64string"),"Encoded Payload",
+match(_raw,"iex|invoke-expression"),"Invoke Expression",
+match(_raw,"downloadstring|webclient"),"Download Cradle",
+match(_raw,"amsi"),"AMSI Tampering",
+match(_raw,"mppreference"),"Defender Tampering",
+1=1,"Other")
+| stats count sparkline by ps_abuse, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Privilege Escalation Indicators</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype IN ("WinEventLog:*","*Sysmon*") $accountname$ $computername$ $customfield$
+| search "token::elevate" OR "getsystem" OR "uac.bypass" OR "fodhelper" OR "sdclt" OR "eventvwr" OR "bypassuac" OR "juicypotato" OR "roguepotato" OR "printnightmare" OR "zerologon" OR "serioussam"
+| eval privesc=case(
+match(_raw,"juicypotato|roguepotato"),"Potato Exploit",
+match(_raw,"fodhelper|sdclt|eventvwr"),"UAC Bypass",
+match(_raw,"printnightmare"),"PrintNightmare",
+match(_raw,"zerologon"),"ZeroLogon",
+match(_raw,"serioussam"),"SeriousSAM",
+1=1,"Other")
+| stats count sparkline by privesc, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>Remote Access Tools (RATs)</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "anydesk" OR "teamviewer" OR "screenconnect" OR "connectwise" OR "splashtop" OR "dwservice" OR "remcos" OR "njrat" OR "darkcomet" OR "asyncrat" OR "quasar"
+| eval rat=case(
+match(_raw,"anydesk"),"AnyDesk",
+match(_raw,"teamviewer"),"TeamViewer",
+match(_raw,"screenconnect|connectwise"),"ScreenConnect",
+match(_raw,"splashtop"),"Splashtop",
+match(_raw,"remcos"),"Remcos",
+match(_raw,"njrat"),"NjRAT",
+match(_raw,"asyncrat"),"AsyncRAT",
+match(_raw,"quasar"),"Quasar",
+1=1,"Other")
+| stats count sparkline by rat, host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Cloud / Identity Abuse</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "Set-MsolUserPassword" OR "Add-AzureADDirectoryRoleMember" OR "Add-MsolRoleMember" OR "Consent to new app" OR "Graph API" OR "OAuth" OR "RefreshToken" OR "Global Administrator"
+| eval cloud_abuse=case(
+match(_raw,"password"),"Password Reset",
+match(_raw,"RoleMember|Administrator"),"Privileged Role Abuse",
+match(_raw,"OAuth|Consent"),"OAuth Abuse",
+match(_raw,"RefreshToken"),"Token Theft",
+1=1,"Other")
+| stats count sparkline by cloud_abuse, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>Suspicious File Extensions</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| rex field=_raw "(?&lt;ext&gt;\.(?:exe|dll|ps1|vbs|js|hta|scr|pif|iso|img|lnk|one|jar|bat|cmd|msi|cpl))"
+| stats count sparkline by ext, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Suspicious Parent → Child Chains</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype="*Sysmon*" $accountname$ $computername$ $customfield$
+| search ParentImage="*winword.exe" OR ParentImage="*excel.exe" OR ParentImage="*outlook.exe" OR ParentImage="*powershell.exe" OR ParentImage="*wscript.exe"
+| eval chain=ParentImage." → ".Image
+| stats count sparkline by chain, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>Suspicious Service Creation</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "sc.exe create" OR "New-Service" OR "binPath="
+| stats count sparkline by host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>WMI Persistence and Execution</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "__EventFilter" OR "CommandLineEventConsumer" OR "ActiveScriptEventConsumer" OR "wmic /node"
+| stats count sparkline by host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>DNS Tunneling Indicators</title>
+      <table>
+        <search>
+          <query>$index$ sourcetype="*dns*" $accountname$ $computername$ $customfield$
+| eval qlen=len(query)
+| where qlen &gt; 50
+| stats count sparkline avg(qlen) as avg_len by query, host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Security Control Tampering</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "netsh advfirewall set allprofiles state off" OR "Set-MpPreference -Disable" OR "DisableRealtimeMonitoring" OR "Add-MpPreference -Exclusion"
+| stats count sparkline by host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>Boot and Driver Persistence</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "bcdedit" OR "bootkit" OR "driverload" OR "fltmc load" OR "sc.exe create type= kernel"
+| stats count sparkline by host
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>TOR / Proxy / VPN Indicators</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "tor.exe" OR "obfsproxy" OR "proxychains" OR "openvpn" OR "wireguard" OR "tailscale" OR "zerotier"
+| stats count sparkline by host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>Archive / Staging Activity</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "7z a" OR "rar a" OR "tar -czf" OR "Compress-Archive" OR "makecab"
+| stats count sparkline by host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Time and Log Manipulation</title>
+      <table>
+        <search>
+          <query>$index$ $accountname$ $computername$ $customfield$
+| search "w32tm /config" OR "Set-Date" OR "Clear-EventLog" OR "wevtutil cl"
+| stats count sparkline by host, Account_Name
+| sort - count</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
       </table>
     </panel>
   </row>
