@@ -6,7 +6,7 @@
 
 ## Overview
 
-The **DFIR Splunk App** is now officially released as **v0.1**. This initial version provides a streamlined, easy-to-install package containing all essential dashboards for Digital Forensics and Incident Response (DFIR) operations.
+The **DFIR Splunk App** is now officially released as **v0.2** and we're on the app store! [https://splunkbase.splunk.com/app/8368](https://splunkbase.splunk.com/app/8368). This initial version provides a streamlined, easy-to-install package containing all essential dashboards for Digital Forensics and Incident Response (DFIR) operations.
 
 This app is designed to simplify deployment and ensure consistency across your Splunk environments by bundling everything into a single, installable unit.
 
@@ -107,6 +107,7 @@ This repository includes dashboards for:
 ## 📚 Resources
 
 - Splunk Documentation: [https://docs.splunk.com](https://docs.splunk.com)
+- - Splunk app [https://splunkbase.splunk.com/app/8368]{https://splunkbase.splunk.com/app/8368}
 - DFIR Playbooks: Coming soon to the Wiki section.
 
 ---
